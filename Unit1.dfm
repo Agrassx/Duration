@@ -11588,7 +11588,7 @@
     Top = 0
     Width = 712
     Height = 660
-    ActivePage = TabSheet3
+    ActivePage = TabSheet4
     Align = alClient
     DragCursor = crArrow
     DragKind = dkDock
@@ -12051,7 +12051,7 @@
           Top = 30
           Width = 677
           Height = 137
-          ColCount = 3
+          ColCount = 4
           DefaultColWidth = 90
           DrawingStyle = gdsClassic
           Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goEditing]
