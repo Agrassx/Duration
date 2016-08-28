@@ -185,7 +185,7 @@ var
   DensRaw:         array of extended;            //Плотность сырья
   productFlowFact: array of FlowFact; // Расходные коэфициенты
   productExpFact:  array of ExpFact;
-  pDSht:           array of DSht;
+  pDSht:           DSht;
   productHeat:     array of Heat;
   productCool:     array of Cool;
   productHeatCapacity: array of HeatCapacity;
@@ -666,6 +666,10 @@ begin
    rowListCool[i].agentTemp := setEditOfHeatRow(rowListCool[i].agentTemp, i, 3, ScrollBox2, Self);
    rowListCool[i].selfHeat := setEditOfHeatRow(rowListCool[i].selfHeat, i, 4, ScrollBox2, Self);
  end;
+
+  StringGrid6.RowCount := 2;
+  StringGrid6.Cells[0,1] := 'Размер';
+
   Form1.SpinEdit3Change(SpinEdit3);
   StringGrid1.Cells[1,0] := 'Размер партии';
   StringGrid2.Cells[1,0] := 'Плотность';
@@ -687,7 +691,7 @@ begin
   StringGrid14.Cells[2,0] := 'Мерников для вх. потока';
   StringGrid14.Cells[3,0] := 'Мерников для доб. потока';
 
-  StringGrid1.Cells[1,1] := '40;130';
+  StringGrid1.Cells[1,1] := '40';
   StringGrid2.Cells[1,1] := '800';
   StringGrid3.Cells[1,1] := '1250';
   StringGrid4.Cells[1,1] := '0,6';
@@ -953,7 +957,6 @@ begin
   StringGrid3.RowCount := SpinEdit3.Value + 1;
   StringGrid4.RowCount := SpinEdit3.Value + 1;
   StringGrid5.RowCount := SpinEdit3.Value + 1;
-  StringGrid6.RowCount := SpinEdit3.Value + 1;
   StringGrid11.RowCount := SpinEdit3.Value + 1;
   StringGrid12.RowCount := SpinEdit3.Value + 1;
   StringGrid13.RowCount := SpinEdit3.Value + 1;
@@ -965,7 +968,6 @@ begin
     StringGrid3.Cells[0,i] := 'Продукт '+IntToStr(i);
     StringGrid4.Cells[0,i] := 'Продукт '+IntToStr(i);
     StringGrid5.Cells[0,i] := 'Продукт '+IntToStr(i);
-    StringGrid6.Cells[0,i] := 'Продукт '+IntToStr(i);
     StringGrid11.Cells[0,i] := 'Продукт '+IntToStr(i);
     StringGrid12.Cells[0,i] := 'Продукт '+IntToStr(i);
     StringGrid13.Cells[0,i] := 'Продукт '+IntToStr(i);
@@ -1222,7 +1224,6 @@ begin
   Setlength(DensRaw, numbOfProduct);
   Setlength(productFlowFact, numbOfProduct);
   Setlength(productExpFact, numbOfProduct);
-  Setlength(pDSht, numbOfProduct);
   Setlength(productHeatCapacity, numbOfProduct);
   Setlength(heatTransfer, numbOfProduct);
   Setlength(durationChemicalReact, numbOfProduct);
@@ -1290,9 +1291,9 @@ begin
       ShowMessage('Таблица "Диаметры штуцеров" заполнена неверно или неполностью');
       exit;
     end;
-    pDSht[i].AddStr := StrToFloat(StringGrid6.Cells[3,i + 1]);
-    pDSht[i].Unload := StrToFloat(StringGrid6.Cells[1,i + 1]);
-    pDSht[i].Raw := StrToFloat(StringGrid6.Cells[2,i + 1]);
+    pDSht.AddStr := StrToFloat(StringGrid6.Cells[3,i + 1]);
+    pDSht.Unload := StrToFloat(StringGrid6.Cells[1,i + 1]);
+    pDSht.Raw := StrToFloat(StringGrid6.Cells[2,i + 1]);
 
     if rowListHeat[i].check.Checked then
       begin
@@ -1556,11 +1557,12 @@ begin
     for i := 0 to numbOfProduct - 1 do
       begin
         AddColoredLine(RichEdit1, 'Для продукта №' + IntToStr(i+1) + ': ', clBlack);
-        AddColoredLine(RichEdit1, '', clBlack);
         AddColoredLine(RichEdit1, 'Постадийный материальный индекс = ' +
                     FloatToStr(products[i].StepMapIndex) + ' м^3/кг', clBlack);
-        AddColoredLine(RichEdit1, '', clBlack);
         AddColoredLine(RichEdit1, 'Подбор размера аппарата: ', clBlack);
+        AddColoredLine(RichEdit1, 'Объем реакционной массы = ' +
+                    FloatToStr(products[i].StepMapIndex*products[i].pBatchSize)
+                    + ' м^3', clBlack);
         AddColoredLine(RichEdit1, 'Пределы размера аппарата [м^3]: '+
                         FloatToStr(products[i].DemUnit.left)+' <= V <= '+
                         FloatToStr(products[i].DemUnit.right), clBlack);
@@ -1577,10 +1579,11 @@ begin
 //-------- calc: general size of machine for all products -------------------->
 //------------------- and calc batch sizes ----------------------------------->
 //---------------------------------------------------------------------------->
-
+      AddColoredLine(RichEdit1, '', clBlack);
       mainEqipment.pMachine := getMaxSizeOfMachine(products);
       AddColoredLine(RichEdit1, 'Выбран общий аппарат размером = ' +
                     FloatToStr(mainEqipment.pMachine.V) + ' м^3', clBlack);
+      AddColoredLine(RichEdit1, '', clBlack);
 
       for i := 0 to numbOfProduct - 1 do
       begin
@@ -1590,7 +1593,6 @@ begin
                                             mainEqipment.pMachine.V);
         AddColoredLine(RichEdit1, 'Для продукта №' + IntToStr(i+1)
                                                             + ': ', clBlack);
-        AddColoredLine(RichEdit1, '', clBlack);
         AddColoredLine(RichEdit1, 'Реальный коэффициент заполнения аппарата: '+
                           FloatToStr(products[i].pRealFillFactor.Real), clBlack);
       end;
@@ -1599,6 +1601,7 @@ begin
       begin
         if products[i].pRealFillFactor.Real < machFillFactor[i].lower then
         begin
+        AddColoredLine(RichEdit1, '', clBlack);
         AddColoredLine(RichEdit1, 'Для продукта №' + IntToStr(i+1) + ': ', clRed);
         AddColoredLine(RichEdit1,'Реальный коэффициент заполнения меньше нижнего коэф. заполнения', clRed);
 
@@ -1634,6 +1637,10 @@ begin
 //<-------- calc: general size of machine for all products --------------------
 //<------------------- and calc batch sizes -----------------------------------
 //<----------------------------------------------------------------------------
+    AddColoredLine(RichEdit1, '', clBlack);
+
+
+
 
 //---------------------------------------------------------------------------->
 //----- calc: suitable size of capacity for add stream for all products ------>
@@ -1647,7 +1654,6 @@ begin
                                               DensAddStr[i]
                                               );
 
-        AddColoredLine(RichEdit1, '', clBlack);
         AddColoredLine(RichEdit1, 'Для продукта №' + IntToStr(i+1) + ': ', clBlack);
         AddColoredLine(RichEdit1, 'Подбор размера емкости для '
                                               +'добавочного потока: ', clBlack);
@@ -1694,10 +1700,12 @@ begin
 //---- calc: general size of capacity for add stream for all products -------->
 //------------------- and calc batch sizes ----------------------------------->
 //---------------------------------------------------------------------------->
-
+    AddColoredLine(RichEdit1, '', clBlack);
     mainEqipment.pCapacityForAddStr := getMaxSizeCapacityForAddStr(products);
     AddColoredLine(RichEdit1, 'Выбран общий мерник размером = ' +
-                    FloatToStr(mainEqipment.pMachine.V) + ' м^3', clBlack);
+                    FloatToStr(mainEqipment.pCapacityForAddStr.V)
+                    + ' м^3', clBlack);
+    AddColoredLine(RichEdit1, '', clBlack);
 
      for i := 0 to numbOfProduct - 1 do
       begin
@@ -1706,9 +1714,8 @@ begin
                                             mainEqipment.pCapacityForAddStr.V
                                             );
         AddColoredLine(RichEdit1, 'Для продукта №' + IntToStr(i+1)+ ': ', clBlack);
-        AddColoredLine(RichEdit1, '', clBlack);
         AddColoredLine(RichEdit1, 'Реальный коэффициент заполнения'
-              +'емкости для добавочного потока: '
+              +' емкости для добавочного потока: '
               + FloatToStr(products[i].pRealFillFactor.AddStr), clBlack);
       end;
 
@@ -1718,7 +1725,7 @@ begin
           begin
           AddColoredLine(RichEdit1, 'Для продукта №' + IntToStr(i+1)+ ': ', clRed);
           AddColoredLine(RichEdit1, 'Реальный коэффициент заполнения емкости'
-            + 'для добавочного потока меньше нижнего коэф. заполнения', clRed);
+            + ' для добавочного потока меньше нижнего коэф. заполнения', clRed);
 
           products[i].pBatchSize := getMaxBatchSize(mainEqipment.pCapacityForAddStr.V,
                                                     DensAddStr[i],
@@ -1750,7 +1757,7 @@ begin
 //<------------------- and calc batch sizes -----------------------------------
 //<----------------------------------------------------------------------------
 
-
+        AddColoredLine(RichEdit1, '', clBlack);
 
 //---------------------------------------------------------------------------->
 //---- calc: suitable size of capacity for input stream for all products ----->
@@ -1765,7 +1772,6 @@ begin
                                             products[i].pBatchSize,
                                             DensInpStr[i]);
 
-        AddColoredLine(RichEdit1, '', clBlack);
         AddColoredLine(RichEdit1, 'Подбор размера емкости для '
                                           +'входящего потока: ', clBlack);
         AddColoredLine(RichEdit1, 'Объем входящего потока: V = '
@@ -1798,7 +1804,7 @@ begin
                                                   -3);
 
         AddColoredLine(RichEdit1, 'Реальный коэффициент заполнения емкости: '
-                      + FloatToStr(products[i].pRealFillFactor.Raw), clBlack);
+                      + FloatToStr(products[i].pRealFillFactor.InpStr), clBlack);
       end;
 
 //<----------------------------------------------------------------------------
@@ -1810,9 +1816,12 @@ begin
 //---- calc: general size of capacity for input stream for all products ------>
 //------------------- and calc batch sizes ----------------------------------->
 //---------------------------------------------------------------------------->
+     AddColoredLine(RichEdit1, '', clBlack);
      mainEqipment.pCapacityForInputStr := getMaxSizeCapacityForInputStr(products);
      AddColoredLine(RichEdit1, 'Выбран общий мерник размером = ' +
-                    FloatToStr(mainEqipment.pMachine.V) + ' м^3', clBlack);
+                    FloatToStr(mainEqipment.pCapacityForInputStr.V)
+                    + ' м^3', clBlack);
+     AddColoredLine(RichEdit1, '', clBlack);
 
      for i := 0 to numbOfProduct - 1 do
       begin
@@ -1822,9 +1831,8 @@ begin
                                             );
         AddColoredLine(RichEdit1, 'Для продукта №' + IntToStr(i+1)
                                           + ': ', clBlack);
-        AddColoredLine(RichEdit1, '', clBlack);
         AddColoredLine(RichEdit1, 'Реальный коэффициент заполнения'
-              +'мерника для входящего потока: '
+              +' мерника для входящего потока: '
               + FloatToStr(products[i].pRealFillFactor.InpStr), clBlack);
       end;
 
@@ -1865,7 +1873,7 @@ begin
 //<--- calc: general size of capacity for input stream for all products -------
 //<------------------- and calc batch sizes -----------------------------------
 //<----------------------------------------------------------------------------
-
+    AddColoredLine(RichEdit1, '', clBlack);
 //---------------------------------------------------------------------------->
 //------------------- calc: Durations of operations -------------------------->
 //---------------------------------------------------------------------------->
@@ -1873,20 +1881,19 @@ begin
       begin
         AddColoredLine(RichEdit1, 'Для продукта №' + IntToStr(i+1)
                                     +': ', clBlack);
-        AddColoredLine(RichEdit1, '', clBlack);
         AddColoredLine(RichEdit1, 'Расчет длительностей: ', clBlack);
         InitHeight := products[i].pRealFillFactor.InpStr*mainEqipment.pCapacityForInputStr.H;
 
         products[i].durationDownloadInputStr := GetDuration(mainEqipment.pCapacityForInputStr.D,
                                                         InitHeight,
-                                                        pDSht[i].Raw,
+                                                        pDSht.Raw,
                                                         productFlowFact[i].InpStr);
 
         InitHeight := products[i].pRealFillFactor.AddStr*mainEqipment.pCapacityForAddStr.H;
 
         products[i].durationDownloadAddStr := GetDuration(mainEqipment.pCapacityForAddStr.D,
                                                         InitHeight,
-                                                        pDSht[i].AddStr,
+                                                        pDSht.AddStr,
                                                         productFlowFact[i].AddStr);
 
         DMachine := Power(2*mainEqipment.pMachine.V/3.14, 1/3);
@@ -1897,11 +1904,10 @@ begin
 
         products[i].durationUploadOutStr := GetDuration(DMachine,
                                                     InitHeight,
-                                                    pDSht[i].Unload,
+                                                    pDSht.Unload,
                                                     productFlowFact[i].OutStr);
 
         AddColoredLine(RichEdit1, '', clBlack);
-
         AddColoredLine(RichEdit1, 'Длительность загрузки входного потока = '
           + FloatToStr(products[i].durationDownloadInputStr)+ ' с', clBlack);
         AddColoredLine(RichEdit1, 'Длительность загрузки доб. потока = '

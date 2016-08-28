@@ -11588,7 +11588,7 @@
     Top = 0
     Width = 712
     Height = 660
-    ActivePage = TabSheet4
+    ActivePage = TabSheet1
     Align = alClient
     DragCursor = crArrow
     DragKind = dkDock
@@ -11792,7 +11792,7 @@
         object StringGrid11: TStringGrid
           Left = 13
           Top = 18
-          Width = 212
+          Width = 228
           Height = 167
           ColCount = 2
           DefaultColWidth = 95
@@ -11811,7 +11811,7 @@
         object StringGrid12: TStringGrid
           Left = 3
           Top = 16
-          Width = 174
+          Width = 198
           Height = 169
           ColCount = 2
           DefaultColWidth = 75
@@ -12052,7 +12052,7 @@
           Width = 677
           Height = 137
           ColCount = 4
-          DefaultColWidth = 90
+          DefaultColWidth = 145
           DrawingStyle = gdsClassic
           Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goEditing]
           TabOrder = 0
