@@ -356,8 +356,8 @@ begin
       exit;
     end;
 
-    if not CheckString(StringGrid6.Cells[3,i + 1]) or not CheckString(StringGrid6.Cells[1,i + 1])
-        or not CheckString(StringGrid6.Cells[2,i + 1]) then
+    if not CheckString(StringGrid6.Cells[3, 1]) or not CheckString(StringGrid6.Cells[1, 1])
+        or not CheckString(StringGrid6.Cells[2, 1]) then
     begin
       ShowMessage('Таблица "Диаметры штуцеров" заполнена неверно или неполностью');
       exit;
@@ -1096,7 +1096,7 @@ begin
    maxSize := products_[0].pMachine;
   for i := 0 to length(products_) - 1 do
     begin
-      if products_[i].pMachine.V <= maxSize.V  then
+      if products_[i].pMachine.V >= maxSize.V  then
         maxSize := products_[i].pMachine;
     end;
   result := maxSize;
@@ -1109,7 +1109,7 @@ begin
    maxSize := products_[0].pCapacityForAddStr;
   for i := 0 to length(products_) - 1 do
     begin
-      if products_[i].pCapacityForAddStr.V <= maxSize.V then
+      if products_[i].pCapacityForAddStr.V >= maxSize.V then
         maxSize := products_[i].pCapacityForAddStr;
     end;
   result := maxSize;
@@ -1122,7 +1122,7 @@ begin
    maxSize := products_[0].pCapacityForInputStr;
   for i := 0 to length(products_) - 1 do
     begin
-      if products_[i].pCapacityForInputStr.V <= maxSize.V then
+      if products_[i].pCapacityForInputStr.V >= maxSize.V then
         maxSize := products_[i].pCapacityForInputStr;
     end;
   result := maxSize;
@@ -1151,7 +1151,7 @@ function getMaxBatchSize(Volume:extended;
                           ExpFact: extended;
                           fillFactor: FillFactor): extended;
 begin
-  Result := RoundTo(Volume*Dens*fillFactor.upper/ExpFact,-3);
+  Result := RoundTo(Volume*Dens*fillFactor.lower/ExpFact,-3);
 end;
 
 function GetDuration(DApp:real;InitHeight:real;DFit:real;ExpFactor:Real):integer;
@@ -1285,15 +1285,15 @@ begin
     productExpFact[i].AddStr := StrToFloat(StringGrid5.Cells[1,i + 1]);
 
 
-    if not CheckString(StringGrid6.Cells[3,i + 1]) or not CheckString(StringGrid6.Cells[1,i + 1])
-        or not CheckString(StringGrid6.Cells[2,i + 1]) then
+    if not CheckString(StringGrid6.Cells[3, 1]) or not CheckString(StringGrid6.Cells[1, 1])
+        or not CheckString(StringGrid6.Cells[2, 1]) then
     begin
       ShowMessage('Таблица "Диаметры штуцеров" заполнена неверно или неполностью');
       exit;
     end;
-    pDSht.AddStr := StrToFloat(StringGrid6.Cells[3,i + 1]);
-    pDSht.Unload := StrToFloat(StringGrid6.Cells[1,i + 1]);
-    pDSht.Raw := StrToFloat(StringGrid6.Cells[2,i + 1]);
+    pDSht.AddStr := StrToFloat(StringGrid6.Cells[3, 1]);
+    pDSht.Unload := StrToFloat(StringGrid6.Cells[1, 1]);
+    pDSht.Raw := StrToFloat(StringGrid6.Cells[2, 1]);
 
     if rowListHeat[i].check.Checked then
       begin
@@ -1733,19 +1733,19 @@ begin
                                                     capacityAddStrFillFactor[i]);
 
           AddColoredLine(RichEdit1, 'Пересчет размера партии: '
-                                +FloatToStr(products[i].pBatchSize), clBlack);
+                                +FloatToStr(products[i].pBatchSize)
+                                +' кг', clBlack);
 
-          products[i].VolumeAddStr := getVolume(productFlowFact[i].AddStr,
+          products[i].VolumeAddStr := getVolume(productExpFact[i].AddStr,
                                             products[i].pBatchSize,
                                             DensAddStr[i]);
 
           AddColoredLine(RichEdit1, 'Пересчет объема добавочного потока = '
                       + FloatToStr(products[i].VolumeAddStr) + ' м^3', clBlack);
 
-          products[i].pCapacityForAddStr := getCapacitySize(products[i],
-                                     products[i].VolumeAddStr,
-                                     capacityAddStrFillFactor[i],
-                                     pCapacity);
+          products[i].pRealFillFactor.AddStr := RoundTo(products[i].VolumeAddStr/
+                                                  products[i].pCapacityForAddStr.V,
+                                                  -3);
 
           AddColoredLine(RichEdit1, 'Реальный коэффициент заполнения емкости: '
                     + FloatToStr(products[i].pRealFillFactor.AddStr), clBlack);
@@ -1851,7 +1851,8 @@ begin
                                               );
 
             AddColoredLine(RichEdit1, 'Пересчет размера партии: '
-                                  +FloatToStr(products[i].pBatchSize), clBlack);
+                                  +FloatToStr(products[i].pBatchSize)
+                                  +' кг', clBlack);
 
             products[i].VolumeRawStr := getVolume(productExpFact[i].InpStr,
                                             products[i].pBatchSize,
@@ -1862,7 +1863,7 @@ begin
 
 
             products[i].pRealFillFactor.InpStr := RoundTo(products[i].VolumeInputStr/
-                                                  mainEqipment.pCapacityForInputStr.V,
+                                                  products[i].pCapacityForInputStr.V,
                                                   -3);
 
             AddColoredLine(RichEdit1, 'Реальный коэффициент заполнения емкости: '
