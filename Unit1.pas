@@ -646,7 +646,9 @@ procedure AddColoredLine(ARichEdit: TRichEdit; AText: string; AColor: TColor);
 procedure TForm1.FormCreate(Sender: TObject);
 var i:integer;
 begin
-  SpinEdit3.Value := 1;
+  SpinEdit3.Value := 0;
+  SpinEdit1.Value := 2;
+  SpinEdit2.Value := 2;
   setLength(rowListHeat, SpinEdit3.value);
   setLength(rowListCool, SpinEdit3.value);
   for i := 0 to SpinEdit3.Value - 1 do
@@ -691,7 +693,7 @@ begin
   StringGrid14.Cells[2,0] := 'Мерников для вх. потока';
   StringGrid14.Cells[3,0] := 'Мерников для доб. потока';
 
-  StringGrid1.Cells[1,1] := '40';
+ {* StringGrid1.Cells[1,1] := '40';
   StringGrid2.Cells[1,1] := '800';
   StringGrid3.Cells[1,1] := '1250';
   StringGrid4.Cells[1,1] := '0,6';
@@ -710,9 +712,9 @@ begin
   StringGrid14.Cells[1,1] := '0,1;0,9';
   StringGrid14.Cells[2,1] := '0,1;0,9';
   StringGrid14.Cells[3,1] := '0,1;0,9';
-
+                                        *}
   Apparatus.Cells[0,0] := 'V, м^3';
-      Apparatus.Cells[1,0] := '0,01';
+ {*     Apparatus.Cells[1,0] := '0,01';
       Apparatus.Cells[2,0] := '0,025';
       Apparatus.Cells[3,0] := '0,04';
       Apparatus.Cells[4,0] := '0,063';
@@ -720,9 +722,9 @@ begin
       Apparatus.Cells[6,0] := '0,16';
       Apparatus.Cells[7,0] := '0,4';
       Apparatus.Cells[8,0] := '0,63';
-      Apparatus.Cells[9,0] := '1,0';
+      Apparatus.Cells[9,0] := '1,0'; *}
     Apparatus.Cells[0,1] := 'm, кг';
-      Apparatus.Cells[1,1] := '300';
+ {*     Apparatus.Cells[1,1] := '300';
       Apparatus.Cells[2,1] := '320';
       Apparatus.Cells[3,1] := '360';
       Apparatus.Cells[4,1] := '370';
@@ -730,35 +732,35 @@ begin
       Apparatus.Cells[6,1] := '480';
       Apparatus.Cells[7,1] := '500';
       Apparatus.Cells[8,1] := '600';
-      Apparatus.Cells[9,1] := '650';
+      Apparatus.Cells[9,1] := '650';  *}
 
     Capacity.Cells[0,0] := 'D, м';
-      Capacity.Cells[1,0] := '0,2';
+    {*   Capacity.Cells[1,0] := '0,2';
       Capacity.Cells[2,0] := '0,3';
       Capacity.Cells[3,0] := '0,5';
       Capacity.Cells[4,0] := '0,6';
       Capacity.Cells[5,0] := '0,7';
       Capacity.Cells[6,0] := '0,8';
       Capacity.Cells[7,0] := '1,0';
-      Capacity.Cells[8,0] := '1,2';
+      Capacity.Cells[8,0] := '1,2'; *}
     Capacity.Cells[0,1] := 'H, м';
-      Capacity.Cells[1,1] := '0,3';
+  {*    Capacity.Cells[1,1] := '0,3';
       Capacity.Cells[2,1] := '0,5';
       Capacity.Cells[3,1] := '0,8';
       Capacity.Cells[4,1] := '0,8';
       Capacity.Cells[5,1] := '0,9';
       Capacity.Cells[6,1] := '1,0';
       Capacity.Cells[7,1] := '1,5';
-      Capacity.Cells[8,1] := '1,8';
+      Capacity.Cells[8,1] := '1,8';    *}
     Capacity.Cells[0,2] := 'V, м^3';
-      Capacity.Cells[1,2] := '0,0094';
+   {*   Capacity.Cells[1,2] := '0,0094';
       Capacity.Cells[2,2] := '0,0353';
       Capacity.Cells[3,2] := '0,157';
       Capacity.Cells[4,2] := '0,226';
       Capacity.Cells[5,2] := '0,346';
       Capacity.Cells[6,2] := '0,502';
       Capacity.Cells[7,2] := '1,177';
-      Capacity.Cells[8,2] := '2,034';
+      Capacity.Cells[8,2] := '2,034';   *}
 
 end;
 

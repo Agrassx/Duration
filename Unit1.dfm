@@ -11588,7 +11588,7 @@
     Top = 0
     Width = 712
     Height = 660
-    ActivePage = TabSheet3
+    ActivePage = TabSheet1
     Align = alClient
     DragCursor = crArrow
     DragKind = dkDock
