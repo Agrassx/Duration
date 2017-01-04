@@ -5,7 +5,8 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.Samples.Spin,
-  Vcl.Grids, Vcl.ComCtrls, StrUtils, Math, Vcl.Menus, IniFiles;
+  Vcl.Grids, Vcl.ComCtrls, StrUtils, Math, Vcl.Menus, IniFiles, Vcl.ExtCtrls,
+  Vcl.DBCtrls;
 
 type
   HeatRow = record
@@ -152,6 +153,7 @@ type
     Label9: TLabel;
     SaveDialog1: TSaveDialog;
     OpenDialog1: TOpenDialog;
+    RadioGroup1: TRadioGroup;
     procedure FormCreate(Sender: TObject);
     procedure CheckBoxClickHeat(Sender: TObject);
     procedure CheckBoxClickCool(Sender: TObject);
@@ -1093,7 +1095,7 @@ end;
 
 function getAppSize(product_: product;
                     pMachine: array of Machine;
-                    minFillFactor: extended): product;
+                    maxFillFactor: extended): product;
 var i:integer;
 begin
   for i := 0 to length(pMachine) do
@@ -1107,7 +1109,7 @@ begin
                                             product_.StepMapIndex,
                                             product_.pBatchSize,
                                             product_.pMachine.V);
-            if (product_.pRealFillFactor.Real < minFillFactor) then
+            if (product_.pRealFillFactor.Real < maxFillFactor) then
                 begin
                   result := product_;
                   break;
@@ -1130,41 +1132,47 @@ begin
 end;
 
 
-function getMaxSizeOfMachine(products_: array of product): Machine;
+function getMaxSizeOfMachine(products_: array of product; searchMaxApp: boolean): Machine;
 var i: Integer;
     maxSize: Machine;
 begin
    maxSize := products_[0].pMachine;
   for i := 0 to length(products_) - 1 do
     begin
-      if products_[i].pMachine.V >= maxSize.V  then
+      if (products_[i].pMachine.V >= maxSize.V) and (not searchMaxApp) then
+        maxSize := products_[i].pMachine
+      else if products_[i].pMachine.V <= maxSize.V then
         maxSize := products_[i].pMachine;
     end;
   result := maxSize;
 end;
 
-function getMaxSizeCapacityForAddStr(products_: array of product): Capacity;
+function getMaxSizeCapacityForAddStr(products_: array of product; searchMaxApp: bool): Capacity;
 var i: Integer;
     maxSize: Capacity;
 begin
    maxSize := products_[0].pCapacityForAddStr;
   for i := 0 to length(products_) - 1 do
     begin
-      if products_[i].pCapacityForAddStr.V >= maxSize.V then
-        maxSize := products_[i].pCapacityForAddStr;
+      if (products_[i].pCapacityForAddStr.V >= maxSize.V) and (not searchMaxApp) then
+        maxSize := products_[i].pCapacityForAddStr
+      else if products_[i].pCapacityForAddStr.V <= maxSize.V then
+        maxSize := products_[i].pCapacityForAddStr
     end;
   result := maxSize;
 end;
 
-function getMaxSizeCapacityForInputStr(products_: array of product): Capacity;
+function getMaxSizeCapacityForInputStr(products_: array of product; searchMaxApp: bool): Capacity;
 var i: Integer;
     maxSize: Capacity;
 begin
    maxSize := products_[0].pCapacityForInputStr;
   for i := 0 to length(products_) - 1 do
     begin
-      if products_[i].pCapacityForInputStr.V >= maxSize.V then
-        maxSize := products_[i].pCapacityForInputStr;
+      if (products_[i].pCapacityForInputStr.V >= maxSize.V) and (not searchMaxApp) then
+        maxSize := products_[i].pCapacityForInputStr
+      else if products_[i].pCapacityForInputStr.V <= maxSize.V then
+        maxSize := products_[i].pCapacityForInputStr
     end;
   result := maxSize;
 end;
@@ -1192,7 +1200,15 @@ function getMaxBatchSize(Volume:extended;
                           ExpFact: extended;
                           fillFactor: FillFactor): extended;
 begin
-  Result := RoundTo(Volume*Dens*fillFactor.lower/ExpFact,-5);
+  Result := RoundTo(Volume*Dens*fillFactor.lower/ExpFact, -5);
+end;
+
+function getMinBatchSize(Volume:extended;
+                          Dens:extended;
+                          ExpFact: extended;
+                          fillFactor: FillFactor): extended;
+begin
+  Result := RoundTo(Volume*Dens*fillFactor.upper/ExpFact, -5);
 end;
 
 function GetDuration(DApp:real;InitHeight:real;DFit:real;ExpFactor:Real):integer;
@@ -1258,7 +1274,7 @@ var i, j, countRetries: integer;
 StrList: TStringList;
 InitHeight:real;
 SurfaceApp: extended;
-isFind, wasFirstCapacityFound, wasSecCapacityFound: boolean;
+isFind, wasFirstCapacityFound, wasSecCapacityFound, searchMaxApp: boolean;
 begin
   numbOfProduct := SpinEdit3.Value;
   Setlength(productsBatchSize, numbOfProduct);
@@ -1392,7 +1408,7 @@ begin
           end;
         productCool[i].endTemp := StrToFloat(rowListCool[i].endTemp.Text);
 
-        if not CheckString(rowListHeat[i].agentTemp.Text) then
+        if not CheckString(rowListCool[i].agentTemp.Text) then
           begin
             ShowMessage('Поле "Температура хладагента" заполнена неверно или не заполнено');
             exit;
@@ -1478,6 +1494,8 @@ begin
 //<----------------------------------------------------------------------------
 //<------------------------- Checks end ---------------------------------------
 //<----------------------------------------------------------------------------
+  searchMaxApp := false;
+  if RadioGroup1.ItemIndex = 1 then searchMaxApp := true;
 
   AddColoredLine(RichEdit1, 'Исходные данные:', clBlack);
   AddColoredLine(RichEdit1, '', clBlack);
@@ -1662,7 +1680,7 @@ begin
 //------------------- and calc batch sizes ----------------------------------->
 //---------------------------------------------------------------------------->
       AddColoredLine(RichEdit1, '', clBlack);
-      mainEqipment.pMachine := getMaxSizeOfMachine(products);
+      mainEqipment.pMachine := getMaxSizeOfMachine(products, searchMaxApp);
       AddColoredLine(RichEdit1, 'Выбран общий аппарат размером = ' +
                     FloatToStr(mainEqipment.pMachine.V) + ' м^3', clBlack);
 
@@ -1684,36 +1702,67 @@ begin
       begin
         if products[i].pRealFillFactor.Real < machFillFactor[i].lower then
         begin
-        AddColoredLine(RichEdit1, '', clBlack);
-        AddColoredLine(RichEdit1, 'Для продукта №' + IntToStr(i+1) + ': ', clRed);
-        AddColoredLine(RichEdit1,'Реальный коэффициент заполнения меньше нижнего коэф. заполнения', clRed);
+          AddColoredLine(RichEdit1, '', clBlack);
+          AddColoredLine(RichEdit1, 'Для продукта №' + IntToStr(i+1) + ': ', clRed);
+          AddColoredLine(RichEdit1,'Реальный коэффициент заполнения меньше нижнего коэф. заполнения', clRed);
 
-        products[i].pBatchSize := getMaxBatchSize(mainEqipment.pMachine.V,
+          products[i].pBatchSize := getMaxBatchSize(mainEqipment.pMachine.V,
                                                     DensRaw[i],
                                                     1, //Magic number
                                                     machFillFactor[i]);
 
-        AddColoredLine(RichEdit1, 'Пересчет размера партии: '
+          AddColoredLine(RichEdit1, 'Пересчет размера партии: '
                               + FloatToStr(products[i].pBatchSize), clBlack);
 
-        products[i].VolumeRawStr := getVolume(productExpFact[i].InpStr,
+          products[i].VolumeRawStr := getVolume(productExpFact[i].InpStr,
                                             products[i].pBatchSize,
                                             DensRaw[i]);
 
-        AddColoredLine(RichEdit1, 'Пересчет объема сырья = '
+          AddColoredLine(RichEdit1, 'Пересчет объема сырья = '
                       + FloatToStr(products[i].VolumeRawStr) + ' м^3', clBlack);
 
 
-        products[i].pRealFillFactor.Real := getReallFillFactor(
+          products[i].pRealFillFactor.Real := getReallFillFactor(
                                             products[i].StepMapIndex,
                                             products[i].pBatchSize,
                                             mainEqipment.pMachine.V);
 
-        AddColoredLine(RichEdit1, 'Реальный коэффициент заполнения аппарата: '
+          AddColoredLine(RichEdit1, 'Реальный коэффициент заполнения аппарата: '
                         + FloatToStr(products[i].pRealFillFactor.Real), clBlack);
-        countRetries := countRetries + 1;
+          countRetries := countRetries + 1;
 
+        end else if products[i].pRealFillFactor.Real > machFillFactor[i].upper then
+        begin
+          AddColoredLine(RichEdit1, '', clBlack);
+          AddColoredLine(RichEdit1, 'Для продукта №' + IntToStr(i+1) + ': ', clRed);
+          AddColoredLine(RichEdit1,'Реальный коэффициент заполнения больше верхнего коэф. заполнения', clRed);
+
+          products[i].pBatchSize := getMinBatchSize(mainEqipment.pMachine.V,
+                                                    DensRaw[i],
+                                                    1, //Magic number
+                                                    machFillFactor[i]);
+
+          AddColoredLine(RichEdit1, 'Пересчет размера партии: '
+                              + FloatToStr(products[i].pBatchSize), clBlack);
+
+          products[i].VolumeRawStr := getVolume(productExpFact[i].InpStr,
+                                            products[i].pBatchSize,
+                                            DensRaw[i]);
+
+          AddColoredLine(RichEdit1, 'Пересчет объема сырья = '
+                      + FloatToStr(products[i].VolumeRawStr) + ' м^3', clBlack);
+
+
+          products[i].pRealFillFactor.Real := getReallFillFactor(
+                                            products[i].StepMapIndex,
+                                            products[i].pBatchSize,
+                                            mainEqipment.pMachine.V);
+
+          AddColoredLine(RichEdit1, 'Реальный коэффициент заполнения аппарата: '
+                        + FloatToStr(products[i].pRealFillFactor.Real), clBlack);
+          countRetries := countRetries + 1;
         end;
+
       end;
 //<------------------- Check Fill factor ---------------------------------------
 
@@ -1780,7 +1829,7 @@ begin
 //---- calc: general size of capacity for input stream for all products ------>
 //------------------- and calc batch sizes ----------------------------------->
 //---------------------------------------------------------------------------->
-     mainEqipment.pCapacityForInputStr := getMaxSizeCapacityForInputStr(products);
+     mainEqipment.pCapacityForInputStr := getMaxSizeCapacityForInputStr(products, searchMaxApp);
      AddColoredLine(RichEdit1, 'Выбран общий мерник размером = ' +
                     FloatToStr(mainEqipment.pCapacityForInputStr.V)
                     + ' м^3', clBlack);
@@ -1806,7 +1855,7 @@ begin
           begin
             AddColoredLine(RichEdit1, '', clBlack);
             AddColoredLine(RichEdit1,'Реальный коэффициент заполнения '
-                                  +'больше верхнего коэф. заполнения', clRed);
+                                  +'меньше нижнего коэф. заполнения', clRed);
 
             products[i].pBatchSize := getMaxBatchSize(
                                               mainEqipment.pCapacityForInputStr.V,
@@ -1842,7 +1891,7 @@ begin
                                             products[j].pBatchSize,
                                             mainEqipment.pMachine.V);
 
-              if (products[j].pRealFillFactor.Real <  machFillFactor[j].lower) then
+              if (products[j].pRealFillFactor.Real < machFillFactor[j].lower) then
               begin
                 AddColoredLine(RichEdit1, 'Для продукта №' + IntToStr(j+1)+ ': ', clBlack);
                 AddColoredLine(RichEdit1, 'Реальный коэффициент заполнения аппарата: '
@@ -1859,7 +1908,63 @@ begin
               end;
             end;
 
-          end else wasFirstCapacityFound := true;
+          end else if products[i].pRealFillFactor.InpStr > capacityInputStrFillFactor[i].upper then
+          begin
+            AddColoredLine(RichEdit1, '', clBlack);
+            AddColoredLine(RichEdit1,'Реальный коэффициент заполнения '
+                                  +'больше верхнего коэф. заполнения', clRed);
+
+            products[i].pBatchSize := getMinBatchSize(
+                                              mainEqipment.pCapacityForInputStr.V,
+                                              DensInpStr[i],
+                                              productExpFact[i].InpStr,
+                                              capacityInputStrFillFactor[i]
+                                              );
+
+            AddColoredLine(RichEdit1, 'Пересчет размера партии: '
+                                  +FloatToStr(products[i].pBatchSize)
+                                  +' кг', clBlack);
+
+            products[i].VolumeInputStr := getVolume(productExpFact[i].InpStr,
+                                            products[i].pBatchSize,
+                                            DensInpStr[i]);
+
+            AddColoredLine(RichEdit1, 'Пересчет объема входящего потока V = '
+                      + FloatToStr(products[i].VolumeInputStr) + ' м^3', clBlack);
+
+
+            products[i].pRealFillFactor.InpStr := RoundTo(products[i].VolumeInputStr/
+                                                  mainEqipment.pCapacityForInputStr.V,
+                                                  -5);
+
+            AddColoredLine(RichEdit1, 'Реальный коэффициент заполнения емкости: '
+                      + FloatToStr(products[i].pRealFillFactor.InpStr), clBlack);
+
+            for j := 0 to numbOfProduct - 1 do
+            begin
+              AddColoredLine(RichEdit1, '', clBlack);
+              products[j].pRealFillFactor.Real := getReallFillFactor(
+                                            products[j].StepMapIndex,
+                                            products[j].pBatchSize,
+                                            mainEqipment.pMachine.V);
+
+              if (products[j].pRealFillFactor.Real < machFillFactor[j].lower) then
+              begin
+                AddColoredLine(RichEdit1, 'Для продукта №' + IntToStr(j+1)+ ': ', clBlack);
+                AddColoredLine(RichEdit1, 'Реальный коэффициент заполнения аппарата: '
+                        + FloatToStr(products[j].pRealFillFactor.Real), clRed);
+                AddColoredLine(RichEdit1, '', clBlack);
+              end
+              else
+              begin
+                AddColoredLine(RichEdit1, 'Для продукта №' + IntToStr(j+1)+ ': ', clBlack);
+                AddColoredLine(RichEdit1, 'Реальный коэффициент заполнения аппарата: '
+                        + FloatToStr(products[j].pRealFillFactor.Real), clBlack);
+                AddColoredLine(RichEdit1, '', clBlack);
+                wasFirstCapacityFound := true;
+              end;
+            end;
+          end;
       end;
 //<----------------------------------------------------------------------------
 //<--- calc: general size of capacity for input stream for all products -------
@@ -1925,7 +2030,7 @@ begin
 //------------------- and calc batch sizes ----------------------------------->
 //---------------------------------------------------------------------------->
     AddColoredLine(RichEdit1, '', clBlack);
-    mainEqipment.pCapacityForAddStr := getMaxSizeCapacityForAddStr(products);
+    mainEqipment.pCapacityForAddStr := getMaxSizeCapacityForAddStr(products, searchMaxApp);
     AddColoredLine(RichEdit1, 'Выбран общий мерник размером = ' +
                     FloatToStr(mainEqipment.pCapacityForAddStr.V)
                     + ' м^3', clBlack);
@@ -1969,7 +2074,7 @@ begin
                       + FloatToStr(products[i].VolumeAddStr) + ' м^3', clBlack);
 
           products[i].pRealFillFactor.AddStr := RoundTo(products[i].VolumeAddStr/
-                                                  mainEqipment.pCapacityForInputStr.V,
+                                                  mainEqipment.pCapacityForAddStr.V,
                                                   -5);
 
           AddColoredLine(RichEdit1, 'Реальный коэффициент заполнения емкости: '
@@ -1999,7 +2104,60 @@ begin
                 wasSecCapacityFound := true;
               end;
             end;
-          end else wasSecCapacityFound := true;
+          end else if products[i].pRealFillFactor.AddStr > capacityAddStrFillFactor[i].upper then
+          begin
+          AddColoredLine(RichEdit1, 'Для продукта №' + IntToStr(i+1)+ ': ', clRed);
+          AddColoredLine(RichEdit1, 'Реальный коэффициент заполнения емкости'
+            + ' для добавочного потока больше верхнего коэф. заполнения', clRed);
+
+          products[i].pBatchSize := getMinBatchSize(mainEqipment.pCapacityForAddStr.V,
+                                                    DensAddStr[i],
+                                                    productExpFact[i].AddStr,
+                                                    capacityAddStrFillFactor[i]);
+
+          AddColoredLine(RichEdit1, 'Пересчет размера партии: '
+                                +FloatToStr(products[i].pBatchSize)
+                                +' кг', clBlack);
+
+          products[i].VolumeAddStr := getVolume(productExpFact[i].AddStr,
+                                            products[i].pBatchSize,
+                                            DensAddStr[i]);
+
+          AddColoredLine(RichEdit1, 'Пересчет объема добавочного потока = '
+                      + FloatToStr(products[i].VolumeAddStr) + ' м^3', clBlack);
+
+          products[i].pRealFillFactor.AddStr := RoundTo(products[i].VolumeAddStr/
+                                                  mainEqipment.pCapacityForAddStr.V,
+                                                  -5);
+
+          AddColoredLine(RichEdit1, 'Реальный коэффициент заполнения емкости: '
+                    + FloatToStr(products[i].pRealFillFactor.AddStr), clBlack);
+
+          for j := 0 to numbOfProduct - 1 do
+            begin
+              AddColoredLine(RichEdit1, '', clBlack);
+              products[j].pRealFillFactor.Real := getReallFillFactor(
+                                            products[j].StepMapIndex,
+                                            products[j].pBatchSize,
+                                            mainEqipment.pMachine.V);
+
+              if (products[j].pRealFillFactor.Real <  machFillFactor[j].lower) then
+              begin
+                AddColoredLine(RichEdit1, 'Для продукта №' + IntToStr(j+1)+ ': ', clBlack);
+                AddColoredLine(RichEdit1, 'Реальный коэффициент заполнения аппарата: '
+                        + FloatToStr(products[j].pRealFillFactor.Real), clRed);
+                AddColoredLine(RichEdit1, '', clBlack);
+              end
+              else
+              begin
+                AddColoredLine(RichEdit1, 'Для продукта №' + IntToStr(j+1)+ ': ', clBlack);
+                AddColoredLine(RichEdit1, 'Реальный коэффициент заполнения аппарата: '
+                        + FloatToStr(products[j].pRealFillFactor.Real), clBlack);
+                AddColoredLine(RichEdit1, '', clBlack);
+                wasSecCapacityFound := true;
+              end;
+            end;
+          end;
       end;
       if wasSecCapacityFound and wasFirstCapacityFound then isFind := true;
       countRetries := countRetries + 1;

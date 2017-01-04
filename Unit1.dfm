@@ -11588,7 +11588,7 @@
     Top = 0
     Width = 712
     Height = 660
-    ActivePage = TabSheet1
+    ActivePage = TabSheet3
     Align = alClient
     DragCursor = crArrow
     DragKind = dkDock
@@ -11630,7 +11630,7 @@
           Left = 4
           Top = 51
           Width = 202
-          Height = 158
+          Height = 118
           ColCount = 2
           Ctl3D = True
           DefaultColWidth = 90
@@ -11660,6 +11660,18 @@
           TabOrder = 1
           Value = 1
           OnChange = SpinEdit3Change
+        end
+        object RadioGroup1: TRadioGroup
+          Left = 3
+          Top = 175
+          Width = 203
+          Height = 44
+          Caption = #1042#1072#1088#1080#1072#1085#1090' '#1088#1072#1089#1095#1077#1090#1072
+          ItemIndex = 0
+          Items.Strings = (
+            #1052#1080#1085#1080#1084#1072#1083#1100#1085#1099#1081' '#1088#1072#1079#1084#1077#1088
+            #1052#1072#1082#1089#1080#1084#1072#1083#1100#1085#1099#1081' '#1088#1072#1079#1084#1077#1088)
+          TabOrder = 2
         end
       end
       object GroupBox2: TGroupBox
