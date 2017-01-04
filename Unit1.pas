@@ -786,7 +786,7 @@ end;
 
 procedure TForm1.N2Click(Sender: TObject);
 begin
-  ShowMessage('"Duration" '+#13#10+'Autor: Agrass'+#13#10+'Version: 3.8.2');
+  ShowMessage('"Duration" '+#13#10+'Autor: Agrass'+#13#10+'Version: 3.9.0');
 end;
 
 procedure TForm1.N3Click(Sender: TObject);
@@ -849,6 +849,26 @@ begin
       for i := 1 to Apparatus.ColCount - 1 do
         for j := 0 to Apparatus.RowCount - 1 do
           IniFile.WriteString('App',inttostr(i)+'_'+inttostr(j),Apparatus.Cells[i,j]);
+
+       for i := 0 to SpinEdit3.Value -1 do
+         begin
+            IniFile.WriteBool('Heat', 'check_'+inttostr(i), rowListHeat[i].check.Checked);
+            IniFile.WriteString('Heat', 'tb_'+inttostr(i), rowListHeat[i].startTemp.Text);
+            IniFile.WriteString('Heat', 'te_'+inttostr(i), rowListHeat[i].endTemp.Text);
+            IniFile.WriteString('Heat', 'ta_'+inttostr(i), rowListHeat[i].agentTemp.Text);
+            IniFile.WriteString('Heat', 'self_'+inttostr(i), rowListHeat[i].selfHeat.Text);
+         end;
+
+       for i := 0 to SpinEdit3.Value -1 do
+         begin
+            IniFile.WriteBool('Cool', 'check_'+inttostr(i), rowListCool[i].check.Checked);
+            IniFile.WriteString('Cool', 'tb_'+inttostr(i), rowListCool[i].startTemp.Text);
+            IniFile.WriteString('Cool', 'te_'+inttostr(i), rowListCool[i].endTemp.Text);
+            IniFile.WriteString('Cool', 'ta_'+inttostr(i), rowListCool[i].agentTemp.Text);
+            IniFile.WriteString('Cool', 'self_'+inttostr(i), rowListCool[i].selfHeat.Text);
+         end;
+
+
     finally
       IniFile.Free;
     end;
@@ -927,6 +947,24 @@ begin
       for i := 1 to Apparatus.ColCount - 1 do
         for j := 0 to Apparatus.RowCount - 1 do
           Apparatus.Cells[i,j] := IniFile.ReadString('App',inttostr(i)+'_'+inttostr(j),Apparatus.Cells[i,j]);
+
+      for i := 0 to SpinEdit3.Value -1 do
+         begin
+            rowListHeat[i].check.Checked := IniFile.ReadBool('Heat', 'check_'+inttostr(i), rowListHeat[i].check.Checked);
+            rowListHeat[i].startTemp.Text := IniFile.ReadString('Heat', 'tb_'+inttostr(i), rowListHeat[i].startTemp.Text);
+            rowListHeat[i].endTemp.Text := IniFile.ReadString('Heat', 'te_'+inttostr(i),  rowListHeat[i].endTemp.Text);
+            rowListHeat[i].agentTemp.Text := IniFile.ReadString('Heat', 'ta_'+inttostr(i), rowListHeat[i].agentTemp.Text);
+            rowListHeat[i].selfHeat.Text := IniFile.ReadString('Heat', 'self_'+inttostr(i), rowListHeat[i].selfHeat.Text);
+         end;
+
+       for i := 0 to SpinEdit3.Value -1 do
+         begin
+            rowListCool[i].check.Checked := IniFile.ReadBool('Cool', 'check_'+inttostr(i), rowListCool[i].check.Checked);
+            rowListCool[i].startTemp.Text := IniFile.ReadString('Cool', 'tb_'+inttostr(i), rowListCool[i].startTemp.Text);
+            rowListCool[i].endTemp.Text := IniFile.ReadString('Cool', 'te_'+inttostr(i), rowListCool[i].endTemp.Text);
+            rowListCool[i].agentTemp.Text := IniFile.ReadString('Cool', 'ta_'+inttostr(i), rowListCool[i].agentTemp.Text);
+            rowListCool[i].selfHeat.Text := IniFile.ReadString('Cool', 'self_'+inttostr(i), rowListCool[i].selfHeat.Text);
+         end;
 
     finally
       IniFile.Free;
@@ -1140,7 +1178,7 @@ var i:integer;
 begin
   for i := 0 to length(pCapacity) - 1  do
       begin
-        if pCapacity[i].V >= VolumeAddStr then
+        if (pCapacity[i].V >= VolumeAddStr / capacityFillFactor.upper) then
           begin
             result:= pCapacity[i];
             break;
@@ -1216,10 +1254,11 @@ begin
 end;
 
 procedure TForm1.РасчитатьClick(Sender: TObject);
-var i: integer;
+var i, j, countRetries: integer;
 StrList: TStringList;
 InitHeight:real;
 SurfaceApp: extended;
+isFind, wasFirstCapacityFound, wasSecCapacityFound: boolean;
 begin
   numbOfProduct := SpinEdit3.Value;
   Setlength(productsBatchSize, numbOfProduct);
@@ -1471,6 +1510,41 @@ begin
   AddColoredLine(RichEdit1, 'Таблица коэффициентов теплопередачи [Вт/(К*м^2)]:', clBlack);
   AddColoredLine(RichEdit1, '#table#', clBlack);
   RichEdit1.Lines.LoadFromStream(getRichGrid(StringGrid11,RichEdit1));
+
+  AddColoredLine(RichEdit1, '', clBlack);
+  AddColoredLine(RichEdit1, 'Операция нагревания:', clBlack);
+
+  for i := 0 to numbOfProduct - 1 do
+  begin
+    AddColoredLine(RichEdit1, '', clBlack);
+    AddColoredLine(RichEdit1, 'Для продукта №' + IntTostr(i + 1), clBlack);
+    if rowListHeat[i].check.Checked then
+    begin
+      AddColoredLine(RichEdit1, 'Начальная температура = '+FloatToStr(productHeat[i].startTemp) +  ' C', clBlack);
+      AddColoredLine(RichEdit1, 'Конечная температура = '+FloatToStr(productHeat[i].endTemp) +  ' C', clBlack);
+      AddColoredLine(RichEdit1, 'Температура теплоносителя = '+FloatToStr(productHeat[i].agentTemp) +  ' C', clBlack);
+    end else begin
+      AddColoredLine(RichEdit1, 'Время самонагревания = '+FloatToStr(productHeat[i].selfHeat) +  ' ч', clBlack);
+    end;
+  end;
+
+  AddColoredLine(RichEdit1, '', clBlack);
+  AddColoredLine(RichEdit1, 'Операция охлаждения:', clBlack);
+
+  for i := 0 to numbOfProduct - 1 do
+  begin
+    AddColoredLine(RichEdit1, '', clBlack);
+    AddColoredLine(RichEdit1, 'Для продукта №' + IntTostr(i + 1), clBlack);
+    if rowListCool[i].check.Checked then
+    begin
+      AddColoredLine(RichEdit1, 'Начальная температура = '+FloatToStr(productCool[i].startTemp) +  ' C', clBlack);
+      AddColoredLine(RichEdit1, 'Конечная температура = '+FloatToStr(productCool[i].endTemp) +  ' C', clBlack);
+      AddColoredLine(RichEdit1, 'Температура хладагента = '+FloatToStr(productCool[i].agentTemp) +  ' C', clBlack);
+    end else begin
+      AddColoredLine(RichEdit1, 'Время самоохлаждения = '+FloatToStr(productCool[i].selfCool) +  ' ч', clBlack);
+    end;
+  end;
+
   AddColoredLine(RichEdit1, '', clBlack);
   AddColoredLine(RichEdit1, 'Таблица длительностей химической реакции [ч]:', clBlack);
   AddColoredLine(RichEdit1, '#table#', clBlack);
@@ -1528,7 +1602,12 @@ begin
 //<----------------------------------------------------------------------------
 //<------------------ calc: step matirial index -------------------------------
 //<----------------------------------------------------------------------------
-
+    countRetries := 0;
+    isFind := false;
+    while (countRetries < 10) and (isFind <> true) do
+    begin
+      wasSecCapacityFound := false;
+      wasFirstCapacityFound := false;
 //---------------------------------------------------------------------------->
 //--------- check: is exist suitable size of machine for products ------------>
 //---------------------------------------------------------------------------->
@@ -1558,6 +1637,7 @@ begin
 //---------------------------------------------------------------------------->
     for i := 0 to numbOfProduct - 1 do
       begin
+        AddColoredLine(RichEdit1, '', clBlack);
         AddColoredLine(RichEdit1, 'Для продукта №' + IntToStr(i+1) + ': ', clBlack);
         AddColoredLine(RichEdit1, 'Постадийный материальный индекс = ' +
                     FloatToStr(products[i].StepMapIndex) + ' м^3/кг', clBlack);
@@ -1585,10 +1665,11 @@ begin
       mainEqipment.pMachine := getMaxSizeOfMachine(products);
       AddColoredLine(RichEdit1, 'Выбран общий аппарат размером = ' +
                     FloatToStr(mainEqipment.pMachine.V) + ' м^3', clBlack);
-      AddColoredLine(RichEdit1, '', clBlack);
+
 
       for i := 0 to numbOfProduct - 1 do
       begin
+        AddColoredLine(RichEdit1, '', clBlack);
         products[i].pRealFillFactor.Real := getReallFillFactor(
                                             products[i].StepMapIndex,
                                             products[i].pBatchSize,
@@ -1630,6 +1711,7 @@ begin
 
         AddColoredLine(RichEdit1, 'Реальный коэффициент заполнения аппарата: '
                         + FloatToStr(products[i].pRealFillFactor.Real), clBlack);
+        countRetries := countRetries + 1;
 
         end;
       end;
@@ -1679,7 +1761,7 @@ begin
             exit;
           end;
 
-        AddColoredLine(RichEdit1, 'Подобрана емкость размером V = : '
+        AddColoredLine(RichEdit1, 'Подобрана емкость размером V = '
             + FloatToStr(products[i].pCapacityForInputStr.V) + ' м^3', clBlack);
 
         products[i].pRealFillFactor.InpStr := RoundTo(products[i].VolumeInputStr/
@@ -1751,7 +1833,33 @@ begin
 
             AddColoredLine(RichEdit1, 'Реальный коэффициент заполнения емкости: '
                       + FloatToStr(products[i].pRealFillFactor.InpStr), clBlack);
-          end;
+
+            for j := 0 to numbOfProduct - 1 do
+            begin
+              AddColoredLine(RichEdit1, '', clBlack);
+              products[j].pRealFillFactor.Real := getReallFillFactor(
+                                            products[j].StepMapIndex,
+                                            products[j].pBatchSize,
+                                            mainEqipment.pMachine.V);
+
+              if (products[j].pRealFillFactor.Real <  machFillFactor[j].lower) then
+              begin
+                AddColoredLine(RichEdit1, 'Для продукта №' + IntToStr(j+1)+ ': ', clBlack);
+                AddColoredLine(RichEdit1, 'Реальный коэффициент заполнения аппарата: '
+                        + FloatToStr(products[j].pRealFillFactor.Real), clRed);
+                AddColoredLine(RichEdit1, '', clBlack);
+              end
+              else
+              begin
+                AddColoredLine(RichEdit1, 'Для продукта №' + IntToStr(j+1)+ ': ', clBlack);
+                AddColoredLine(RichEdit1, 'Реальный коэффициент заполнения аппарата: '
+                        + FloatToStr(products[j].pRealFillFactor.Real), clBlack);
+                AddColoredLine(RichEdit1, '', clBlack);
+                wasFirstCapacityFound := true;
+              end;
+            end;
+
+          end else wasFirstCapacityFound := true;
       end;
 //<----------------------------------------------------------------------------
 //<--- calc: general size of capacity for input stream for all products -------
@@ -1769,7 +1877,7 @@ begin
                                               products[i].pBatchSize,
                                               DensAddStr[i]
                                               );
-
+        AddColoredLine(RichEdit1, '', clBlack);
         AddColoredLine(RichEdit1, 'Для продукта №' + IntToStr(i+1) + ': ', clBlack);
         AddColoredLine(RichEdit1, 'Подбор размера емкости для '
                                               +'добавочного потока: ', clBlack);
@@ -1829,6 +1937,7 @@ begin
                                             products[i].VolumeAddStr,
                                             mainEqipment.pCapacityForAddStr.V
                                             );
+        AddColoredLine(RichEdit1, '', clBlack);
         AddColoredLine(RichEdit1, 'Для продукта №' + IntToStr(i+1)+ ': ', clBlack);
         AddColoredLine(RichEdit1, 'Реальный коэффициент заполнения'
               +' емкости для добавочного потока: '
@@ -1865,8 +1974,41 @@ begin
 
           AddColoredLine(RichEdit1, 'Реальный коэффициент заполнения емкости: '
                     + FloatToStr(products[i].pRealFillFactor.AddStr), clBlack);
-          end;
+
+          for j := 0 to numbOfProduct - 1 do
+            begin
+              AddColoredLine(RichEdit1, '', clBlack);
+              products[j].pRealFillFactor.Real := getReallFillFactor(
+                                            products[j].StepMapIndex,
+                                            products[j].pBatchSize,
+                                            mainEqipment.pMachine.V);
+
+              if (products[j].pRealFillFactor.Real <  machFillFactor[j].lower) then
+              begin
+                AddColoredLine(RichEdit1, 'Для продукта №' + IntToStr(j+1)+ ': ', clBlack);
+                AddColoredLine(RichEdit1, 'Реальный коэффициент заполнения аппарата: '
+                        + FloatToStr(products[j].pRealFillFactor.Real), clRed);
+                AddColoredLine(RichEdit1, '', clBlack);
+              end
+              else
+              begin
+                AddColoredLine(RichEdit1, 'Для продукта №' + IntToStr(j+1)+ ': ', clBlack);
+                AddColoredLine(RichEdit1, 'Реальный коэффициент заполнения аппарата: '
+                        + FloatToStr(products[j].pRealFillFactor.Real), clBlack);
+                AddColoredLine(RichEdit1, '', clBlack);
+                wasSecCapacityFound := true;
+              end;
+            end;
+          end else wasSecCapacityFound := true;
       end;
+      if wasSecCapacityFound and wasFirstCapacityFound then isFind := true;
+      countRetries := countRetries + 1;
+    end;
+
+    if (countRetries >= 10) and (isFind) then
+    begin
+      AddColoredLine(RichEdit1, 'End', clRed);
+    end;
 
 //<----------------------------------------------------------------------------
 //<---- calc: general size of capacity for add stream for all products --------
@@ -1876,8 +2018,12 @@ begin
 //---------------------------------------------------------------------------->
 //------------------- calc: Durations of operations -------------------------->
 //---------------------------------------------------------------------------->
+  if wasFirstCapacityFound and wasSecCapacityFound then
+  begin
+
    for i := 0 to numbOfProduct - 1 do
       begin
+        AddColoredLine(RichEdit1, '', clBlack);
         AddColoredLine(RichEdit1, 'Для продукта №' + IntToStr(i+1)
                                     +': ', clBlack);
         AddColoredLine(RichEdit1, 'Расчет длительностей: ', clBlack);
@@ -2005,6 +2151,7 @@ begin
         AddColoredLine(RichEdit1, '', clBlack);
         AddColoredLine(RichEdit1, '', clBlack);
       end;
+  end;
 end;
 
 end.
