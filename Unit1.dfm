@@ -4,7 +4,7 @@
   VertScrollBar.ButtonSize = 2
   Caption = 'Duration'
   ClientHeight = 660
-  ClientWidth = 712
+  ClientWidth = 713
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -11586,9 +11586,9 @@
   object PageControl1: TPageControl
     Left = 0
     Top = 0
-    Width = 712
+    Width = 713
     Height = 660
-    ActivePage = TabSheet3
+    ActivePage = TabSheet1
     Align = alClient
     DragCursor = crArrow
     DragKind = dkDock
@@ -12104,7 +12104,7 @@
       object RichEdit1: TRichEdit
         Left = 0
         Top = 0
-        Width = 704
+        Width = 705
         Height = 600
         Align = alTop
         Font.Charset = RUSSIAN_CHARSET

@@ -415,7 +415,7 @@ begin
             exit;
           end;
 
-        if not CheckString(rowListHeat[i].agentTemp.Text) then
+        if not CheckString(rowListCool[i].agentTemp.Text) then
           begin
             ShowMessage('Поле "Температура хладагента" заполнена неверно или не заполнено');
             exit;
@@ -788,7 +788,7 @@ end;
 
 procedure TForm1.N2Click(Sender: TObject);
 begin
-  ShowMessage('"Duration" '+#13#10+'Autor: Agrass'+#13#10+'Version: 3.9.0');
+  ShowMessage('"Duration" '+#13#10+'Autor: Agrass'+#13#10+'Version: 3.9.2');
 end;
 
 procedure TForm1.N3Click(Sender: TObject);
@@ -2080,6 +2080,10 @@ begin
           AddColoredLine(RichEdit1, 'Реальный коэффициент заполнения емкости: '
                     + FloatToStr(products[i].pRealFillFactor.AddStr), clBlack);
 
+//---------------------------------------------------------------------------->
+//---------------- calc: recalc fiil facor for machine ----------------------->
+//---------------------------------------------------------------------------->
+
           for j := 0 to numbOfProduct - 1 do
             begin
               AddColoredLine(RichEdit1, '', clBlack);
@@ -2104,6 +2108,44 @@ begin
                 wasSecCapacityFound := true;
               end;
             end;
+//<----------------------------------------------------------------------------
+//<---------------- calc: recalc fiil facor for machine -----------------------
+//<----------------------------------------------------------------------------
+
+
+//---------------------------------------------------------------------------->
+//-------------- calc: recalc fiil facor for input stream -------------------->
+//---------------------------------------------------------------------------->
+            AddColoredLine(RichEdit1, '', clBlack);
+            for j := 0 to numbOfProduct - 1 do
+            begin
+              products[j].VolumeInputStr := getVolume(productExpFact[j].InpStr,
+                                            products[j].pBatchSize,
+                                            DensInpStr[j]);
+              products[j].pRealFillFactor.InpStr := RoundTo(products[j].VolumeInputStr/
+                                                  mainEqipment.pCapacityForInputStr.V,
+                                                  -5);
+
+              if (products[j].pRealFillFactor.InpStr <  capacityInputStrFillFactor[j].lower) then
+              begin
+                AddColoredLine(RichEdit1, 'Для продукта №' + IntToStr(j+1)+ ': ', clBlack);
+                AddColoredLine(RichEdit1, 'Реальный коэффициент заполнения емкости для входного потока: '
+                        + FloatToStr(products[j].pRealFillFactor.InpStr), clRed);
+                AddColoredLine(RichEdit1, '', clBlack);
+                wasFirstCapacityFound := false;
+              end
+              else
+              begin
+                AddColoredLine(RichEdit1, 'Для продукта №' + IntToStr(j+1)+ ': ', clBlack);
+                AddColoredLine(RichEdit1, 'Реальный коэффициент заполнения емкости для входного потока: '
+                        + FloatToStr(products[j].pRealFillFactor.InpStr), clBlack);
+                AddColoredLine(RichEdit1, '', clBlack);
+                wasFirstCapacityFound := true;
+              end;
+            end;
+//<----------------------------------------------------------------------------
+//<-------------- calc: recalc fiil facor for input stream --------------------
+//<----------------------------------------------------------------------------
           end else if products[i].pRealFillFactor.AddStr > capacityAddStrFillFactor[i].upper then
           begin
           AddColoredLine(RichEdit1, 'Для продукта №' + IntToStr(i+1)+ ': ', clRed);
@@ -2132,6 +2174,9 @@ begin
 
           AddColoredLine(RichEdit1, 'Реальный коэффициент заполнения емкости: '
                     + FloatToStr(products[i].pRealFillFactor.AddStr), clBlack);
+//---------------------------------------------------------------------------->
+//---------------- calc: recalc fiil facor for machine ----------------------->
+//---------------------------------------------------------------------------->
 
           for j := 0 to numbOfProduct - 1 do
             begin
@@ -2157,6 +2202,44 @@ begin
                 wasSecCapacityFound := true;
               end;
             end;
+//<----------------------------------------------------------------------------
+//<---------------- calc: recalc fiil facor for machine -----------------------
+//<----------------------------------------------------------------------------
+
+
+//---------------------------------------------------------------------------->
+//-------------- calc: recalc fiil facor for input stream -------------------->
+//---------------------------------------------------------------------------->
+            AddColoredLine(RichEdit1, '', clBlack);
+            for j := 0 to numbOfProduct - 1 do
+            begin
+              products[j].VolumeInputStr := getVolume(productExpFact[j].InpStr,
+                                            products[j].pBatchSize,
+                                            DensInpStr[j]);
+              products[j].pRealFillFactor.InpStr := RoundTo(products[j].VolumeInputStr/
+                                                  mainEqipment.pCapacityForInputStr.V,
+                                                  -5);
+
+              if (products[j].pRealFillFactor.InpStr <  capacityInputStrFillFactor[j].lower) then
+              begin
+                AddColoredLine(RichEdit1, 'Для продукта №' + IntToStr(j+1)+ ': ', clBlack);
+                AddColoredLine(RichEdit1, 'Реальный коэффициент заполнения емкости для входного потока: '
+                        + FloatToStr(products[j].pRealFillFactor.InpStr), clRed);
+                AddColoredLine(RichEdit1, '', clBlack);
+                wasFirstCapacityFound := false;
+              end
+              else
+              begin
+                AddColoredLine(RichEdit1, 'Для продукта №' + IntToStr(j+1)+ ': ', clBlack);
+                AddColoredLine(RichEdit1, 'Реальный коэффициент заполнения емкости для входного потока: '
+                        + FloatToStr(products[j].pRealFillFactor.InpStr), clBlack);
+                AddColoredLine(RichEdit1, '', clBlack);
+                wasFirstCapacityFound := true;
+              end;
+            end;
+//<----------------------------------------------------------------------------
+//<-------------- calc: recalc fiil facor for input stream --------------------
+//<----------------------------------------------------------------------------
           end;
       end;
       if wasSecCapacityFound and wasFirstCapacityFound then isFind := true;
